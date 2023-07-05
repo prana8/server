@@ -3,33 +3,34 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: *");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Menerima data dari request
+// Mendapatkan data dari request
 $data = json_decode(file_get_contents("php://input"));
 
 // Menghubungkan ke database
-$host = "localhost";
-$dbname = "ticki_taka";
-$username = "root";
-$password = "";
+include "./connection.php";
 
+// Memeriksa keberadaan pengguna dengan email yang cocok
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
-
-// Memeriksa keberadaan pengguna dengan email dan password yang cocok
-try {
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email = :email AND password = :password");
+    $stmt = $conn->prepare("SELECT * FROM users WHERE email = :email");
     $stmt->bindParam(":email", $data->email);
-    $stmt->bindParam(":password", $data->password);
     $stmt->execute();
 
     if ($stmt->rowCount() > 0) {
-        // Pengguna ditemukan, mengirim response status success
-        $response = array("status" => "success");
-        echo json_encode($response);
+        // Pengguna ditemukan, mengambil data pengguna dari hasil query
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Memeriksa kecocokan password
+        if (password_verify($data->password, $user["password"])) {
+            // Password cocok
+            // Mengirim response status success beserta user_name
+            $response = array("status" => "success", "user_name" => $user["user_name"], "userStatus" => $user['status'] );
+            echo json_encode($response);
+        } else {
+            // Password tidak cocok
+            // Mengirim response status error
+            $response = array("status" => "error", "message" => "Invalid email or password");
+            echo json_encode($response);
+        }
     } else {
         // Pengguna tidak ditemukan, mengirim response status error
         $response = array("status" => "error", "message" => "Invalid email or password");
