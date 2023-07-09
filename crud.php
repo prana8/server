@@ -2,6 +2,8 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: *");
 header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
+
 
 include "./connection.php";
 
@@ -57,13 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Menggunakan method DELETE untuk menghapus data dari database
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     // Menerima data dari request
-    $data = json_decode(file_get_contents('php://input'), true);
+    $id = $_GET['id'];
 
     try {
         // Query untuk menghapus data dari tabel movies berdasarkan id
-        $sql = 'DELETE FROM movies WHERE id = ?';
+        $sql = 'DELETE FROM movies WHERE id = :id';
         $stmt = $conn->prepare($sql);
-        $stmt->execute([$data['id']]);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
 
         // Jika data berhasil dihapus
         http_response_code(200);
@@ -74,17 +77,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         echo json_encode(array('message' => 'Error deleting movie: ' . $e->getMessage()));
     }
 }
-
 // Menggunakan method PUT untuk memperbarui data di database
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     // Menerima data dari request
+    $id = $_GET['id'];
     $data = json_decode(file_get_contents('php://input'), true);
 
     try {
-        // Query untuk memperbarui data di tabel movies berdasarkan id
-        $sql = 'UPDATE movies SET movie_cover = ?, tittle = ?, rating = ?, detail = ?, release_date = ? WHERE id = ?';
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$data['movie_cover'], $data['tittle'], $data['rating'], $data['detail'], $data['release_date'], $data['id']]);
+        $stmt = $conn->prepare("UPDATE movies (movie_cover, tittle, rating, detail, realase_date) VALUES (:movie_cover, :tittle, :rating, :detail, :realase_date) WHERE id =:id");
+        $stmt->bindParam(":movie_cover", $data['movie_cover']);
+        $stmt->bindParam(":tittle", $data['tittle']);
+        $stmt->bindParam(":rating", $data['rating']);
+        $stmt->bindParam(":detail", $data['detail']);
+        $stmt->bindParam(":realase_date", $data['realase_date']);
+        $stmt->execute();
 
         // Jika data berhasil diperbarui
         http_response_code(200);
