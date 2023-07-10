@@ -84,12 +84,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $data = json_decode(file_get_contents('php://input'), true);
 
     try {
-        $stmt = $conn->prepare("UPDATE movies (movie_cover, tittle, rating, detail, realase_date) VALUES (:movie_cover, :tittle, :rating, :detail, :realase_date) WHERE id =:id");
+        $stmt = $conn->prepare("UPDATE movies SET movie_cover = :movie_cover, tittle = :tittle, rating = :rating, detail = :detail, realase_date = :realase_date WHERE id = :id");
         $stmt->bindParam(":movie_cover", $data['movie_cover']);
         $stmt->bindParam(":tittle", $data['tittle']);
         $stmt->bindParam(":rating", $data['rating']);
         $stmt->bindParam(":detail", $data['detail']);
         $stmt->bindParam(":realase_date", $data['realase_date']);
+        $stmt->bindParam(":id", $id);
         $stmt->execute();
 
         // Jika data berhasil diperbarui
@@ -101,4 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         echo json_encode(array('message' => 'Error updating movie: ' . $e->getMessage()));
     }
 }
+
+
 ?>
